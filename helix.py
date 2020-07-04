@@ -136,7 +136,7 @@ class Momentum(NamedTuple):
 
 
     def phi0pt0(self, pos: Position, q: dtype, B: float) -> (dtype):
-        """ Helper function that calculates phi0 and pt0 effectively """
+        """ Helper function that calculates phi0 and pt0 efficiently """
         px0_ = self.px0(pos, q, B)
         py0_ = self.py0(pos, q, B)
         return (np.arctan2(py0_, px0_), np.sqrt(px0_**2 + py0_**2))
