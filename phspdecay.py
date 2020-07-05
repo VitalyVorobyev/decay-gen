@@ -12,28 +12,40 @@ def pname(lbl: str, name: str) -> (GenParticle):
     return GenParticle(name, Particle.findall(lbl)[0].mass)
 
 
-def generate(nevt: int) -> (np.ndarray, dict):
-    """ Generates decay chain """
+def generate(decstr: str, nevt: int) -> (np.ndarray, dict):
+    """ Generates decay chain
+    FIXME: implement decay generation for a given decay string
+    """
     pion = pname('pi+', 'pi+')
     kaon = pname('K-', 'K-')
     kstar = pname('K*(892)0', 'K*0').set_children(pion, kaon)
-    gamma = pname('gamma', 'gamma')
-    dz = pname('D0', 'D0').set_children(kstar, gamma)
+    pion_dplus = pname('pi+', 'D0_pi+')
+    dplus = pname('D+', 'D+').set_children(kstar, pion_dplus)
+    # dz = pname('D0', 'D0').set_children(kstar, gamma)
+    # gamma = pname('gamma', 'gamma')
+    # dz = pname('D0', 'D0').set_children(kstar, gamma)
 
-    weights, particles = dz.generate(n_events=nevt)
+    namedict = {
+        'pi+': 'pi+',
+        'K-': 'K-',
+        'K*0': 'K*(892)0',
+        'D0_pi+': 'pi+',
+    }
 
-    return (weights.numpy(), particles)
+    weights, particles = dplus.generate(n_events=nevt)
+
+    return (weights.numpy(), particles, namedict)
 
 
 def genmom_to_helix(genmom: np.ndarray) -> (Helix, np.ndarray):
     """  """
     nevt = genmom.shape[0]
-    mom_pip = Momentum.from_ndarray(genmom[:,:-1])
-    pos_pip = Position.from_ndarray(np.zeros((nevt, 3)))
+    mom = Momentum.from_ndarray(genmom[:,:-1])
+    pos = Position.from_ndarray(np.zeros((nevt, 3)))
 
     rng = jax.random.PRNGKey(seed=0)
     q = jax.random.choice(rng, [-1, 1], (nevt,))
 
-    (hel, l) = cartesian_to_helix(pos_pip, mom_pip, q, B=1.5)
+    hel, l = cartesian_to_helix(pos, mom, q, B=1.5)
 
-    return (hel, l)
+    return (pos, hel, l)
