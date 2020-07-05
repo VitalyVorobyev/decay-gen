@@ -8,10 +8,11 @@
 """
 
 from typing import NamedTuple
-import numpy as onp
 
 import jax.numpy as np
 import jax
+
+rng = jax.random.PRNGKey(seed=0)
     
 dtype = np.ndarray
 
@@ -136,7 +137,7 @@ class Momentum(NamedTuple):
 
 
     def phi0pt0(self, pos: Position, q: dtype, B: float) -> (dtype):
-        """ Helper function that calculates phi0 and pt0 effectively """
+        """ Helper function that calculates phi0 and pt0 efficiently """
         px0_ = self.px0(pos, q, B)
         py0_ = self.py0(pos, q, B)
         return (np.arctan2(py0_, px0_), np.sqrt(px0_**2 + py0_**2))
@@ -207,32 +208,19 @@ def jacobian(hel, l, q, B):
     ], axis=2)
 
 
-def helix_covariance(hel):
-    """ """
-    pass
+def helix_covariance_flat(hel: Helix) -> (dtype):
+    """ [d0, phi0 omega, z0, tan(lambda)] """
+    eps = 5.e-2
+    return np.diag(np.array([
+        hel.d0, hel.phi0, hel.z0, hel.omega, hel.tanl
+    ]))**2 * eps**2
 
 
-def cartesian_covariance(hel):
-    """ """
-    pass
+def sample_helix_resolution_flat(hel: Helix, cov: dtype) -> (Helix):
+    """ Sample helix parameters given true parameters and covariance matrix """
+    dhel = jax.random.multivariate_normal(rng, np.zeros((cov.shape[-1])), cov)
+    return Helix.from_ndarray(hel.as_array + dhel)
 
 
-def sample_helix_resolution(hel):
-    """ """
-    pass
-
-
-if __name__ == '__main__':
-    N = 20
-    hel = Helix.from_ndarray(onp.random.random((N, 5)))
-    q = onp.random.choice([-1, 1], N)
-    l = onp.random.random(N)
-    B = 1. * onp.ones(N)
-
-    f = position_from_helix
-
-    df1 = jax.vmap(jax.jacfwd(f, argnums=0))
-    df2 = jax.vmap(jax.jacrev(f, argnums=0))
-
-    print(df1(hel, l, q, B).x.as_array.shape)
-    print(df2(hel, l, q, B).x.as_array.shape)
+helix_covariance = jax.vmap(helix_covariance_flat)
+sample_helix_resolution = jax.vmap(sample_helix_resolution_flat)

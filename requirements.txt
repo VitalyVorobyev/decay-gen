@@ -1,2 +1,8 @@
 numpy
 jax
+jaxlib
+coverage
+pytest
+phasespace
+particle
+tensorflow
