@@ -10,18 +10,20 @@ def test_pname():
 
 
 def test_generate():
-    w, p = d.generate(100)
+    N = 100
+    w, p, _ = d.generate('', N)
 
-    assert w.shape == (100, )
-    assert p['K-'].shape == (100, 4)
+    assert w.shape == (N, )
+    assert p['K-'].shape == (N, 4)
     assert np.all(p['K-'][:,-1] > 0)  # energy is the last
 
 
 def test_genmom_to_helix():
     N = 100
-    _, p = d.generate(N)
+    _, p, _ = d.generate('', N)
 
-    hel, l = d.genmom_to_helix(p['pi+'].numpy())
+    pos, hel, l = d.genmom_to_helix(p['pi+'].numpy())
 
     assert l.shape == (N, )
     assert hel.as_array.shape == (N, 5)
+    assert pos.as_array.shape == (N, 3)
