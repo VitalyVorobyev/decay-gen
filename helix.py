@@ -12,16 +12,9 @@ from typing import NamedTuple
 import jax.numpy as np
 import jax
 
-rng = jax.random.PRNGKey(seed=0)
-    
+from cartesian import Position, Momentum, alpha
+
 dtype = np.ndarray
-
-speedOfLight = 29.9792458  # [cm / ns]
-
-def alpha(B):
-    """ """
-    return 1.0 / (B * speedOfLight) * 1e4
-
 
 class Helix(NamedTuple):
     """ Helix representation as in W. Hulsbergen NIM 552 (2005) 566  """
@@ -60,87 +53,6 @@ class Helix(NamedTuple):
     def phi(self, l: dtype) -> (dtype):
         """ l: flight length """
         return self.phi0 + self.omega * l
-
-
-class Position(NamedTuple):
-    """ Position on helix """
-    x: dtype
-    y: dtype
-    z: dtype
-
-    @staticmethod
-    def from_ndarray(data: np.ndarray):
-        """ """
-        assert data.shape[1] == 3
-        return Position(*[data[:,i] for i in range(3)])
-
-
-    @property
-    def as_array(self) -> (np.ndarray):
-        return np.column_stack([self.x, self.y, self.z])
-
-
-    def __sub__(self, rhs):
-        """ Position subtraction """
-        return Position.from_ndarray(self.as_array - rhs.as_array)
-
-
-    def __div__(self, coef: float):
-        """ Division by float """
-        return Position.from_ndarray(self.as_array / coef)
-
-
-    def __mul__(self, coef: float):
-        """ Multiplication by float """
-        return Position.from_ndarray(self.as_array * coef)
-
-    
-class Momentum(NamedTuple):
-    """ Particle momentum """
-    px: dtype
-    py: dtype
-    pz: dtype
-
-    @staticmethod
-    def from_ndarray(data: np.ndarray):
-        """ """
-        assert data.shape[1] == 3
-        return Momentum(*[data[:,i] for i in range(3)])
-
-
-    @property
-    def as_array(self) -> (np.ndarray):
-        return np.column_stack([self.px, self.py, self.pz])
-
-    
-    @property
-    def pt(self) -> (dtype):
-        """ Transverse momentum """
-        return np.sqrt(self.px**2 + self.py**2)
-
-
-    def px0(self, pos: Position, q: dtype, B: float) -> (dtype):
-        """ """
-        return self.px + pos.y * q * alpha(B)
-
-
-    def py0(self, pos: Position, q: dtype, B: float) -> (dtype):
-        """ """
-        return self.py - pos.x * q * alpha(B)
-
-
-    def pt0(self, pos: Position, q: dtype, B: float)\
-        -> (dtype):
-        """ """
-        return np.sqrt(self.px0(pos, q, B)**2 +
-                       self.py0(pos, q, B)**2)
-
-
-    def phi0pt0(self, pos: Position, q: dtype, B: float) -> (dtype):
-        """ Helper function that calculates phi0 and pt0 efficiently """
-        px0_ = self.px0(pos, q, B)
-        py0_ = self.py0(pos, q, B)
-        return (np.arctan2(py0_, px0_), np.sqrt(px0_**2 + py0_**2))
 
 
 def position_from_helix(hel: Helix, l: dtype, q: dtype, B: float) -> (Position):
@@ -192,7 +104,7 @@ def cartesian_to_helix(pos: Position, mom: Momentum, q: dtype, B: float)\
 position_from_helix_jacobian = jax.vmap(jax.jacfwd(position_from_helix, argnums=0))
 momentum_from_helix_jacobian = jax.vmap(jax.jacfwd(momentum_from_helix, argnums=0))
 
-def jacobian(hel, l, q, B):
+def full_jacobian_from_helix(hel: Helix, l: dtype, q: int, B: float) -> (dtype):
     """ Calculates helix over (pos, mom) jacobian.
     Returns np.array of shape (N, 5, 6), where N is number of events """
     jac_pos = position_from_helix_jacobian(hel, l, q, B)
@@ -208,7 +120,8 @@ def jacobian(hel, l, q, B):
     ], axis=2)
 
 
-def helix_covariance_flat(hel: Helix) -> (dtype):
+@jax.vmap
+def helix_covariance(hel: Helix) -> (dtype):
     """ [d0, phi0 omega, z0, tan(lambda)] """
     eps = 5.e-2
     return np.diag(np.array([
@@ -216,11 +129,14 @@ def helix_covariance_flat(hel: Helix) -> (dtype):
     ]))**2 * eps**2
 
 
-def sample_helix_resolution_flat(hel: Helix, cov: dtype) -> (Helix):
+@jax.vmap
+def sample_helix_resolution(hel: Helix) -> (Helix):
     """ Sample helix parameters given true parameters and covariance matrix """
+    rng = jax.random.PRNGKey(seed=0)
+    cov = helix_covariance(hel)
     dhel = jax.random.multivariate_normal(rng, np.zeros((cov.shape[-1])), cov)
-    return Helix.from_ndarray(hel.as_array + dhel)
+    return (Helix.from_ndarray(hel.as_array + dhel), cov)
 
 
-helix_covariance = jax.vmap(helix_covariance_flat)
-sample_helix_resolution = jax.vmap(sample_helix_resolution_flat)
+# helix_covariance = jax.vmap(helix_covariance_flat)
+# sample_helix_resolution = jax.vmap(sample_helix_resolution_flat)
