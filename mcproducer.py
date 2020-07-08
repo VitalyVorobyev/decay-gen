@@ -11,32 +11,36 @@
 
 import os
 import json
-from particle import Particle
 
-from phspdecay import generate, genmom_to_helix
-
-stable_charged = set(['pi+', 'pi-', 'e+', 'e-', 'p', 'anti-p', 'K+', 'K-', 'mu+', 'mu-'])
-stable_neutral = set(['gamma', 'n', 'anti-n'])
+from phspdecay import generate
 
 
 def produce(decstr: str, nevts: int, lbl: str):
     """ """
-    weights, particles, namedict = generate(decstr, nevts)
+    weights, genpcls = generate(decstr, nevts)
 
     data = {'weights': weights.tolist()}
 
-    for pname, pmom in particles.items():
-        pmom = pmom.numpy()
-        pdgname = namedict[pname]
-        data[pname] = {'momgen': pmom.tolist()}
-        if pdgname in stable_charged:
-            pos, hel, l = genmom_to_helix(pmom)
+    for pname, info in genpcls.items():
+        data[pname] = {
+            'mom': info['mom'].as_array.tolist(),
+            'pos': info['pos'].as_array.tolist(),
+            'pdgid': info['pcl'].pdgid,
+            'pdgname': info['pcl'].name,
+            'pdgmass': info['pcl'].mass,
+        }
+        if 'clu' in info:  # photon
             data[pname].update({
-                'posgen': pos.as_array.tolist(),
-                'helix': hel.as_array.tolist(),
-                'l': l.tolist(),
-                'pdgtype': pdgname,
-                'pdgid': Particle.findall(pdgname)[0].pdgid,
+                'clu': info['clu'].as_array.tolist(),
+                'clucov': info['clucov'].tolist(),
+                'meas_mom': info['meas_mom'].as_array.tolist(),
+            })
+        elif 'hel' in info:  # stable charged
+            data[pname].update({
+                'hel': info['hel'].as_array.tolist(),
+                'helcov': info['helcov'].tolist(),
+                'meas_pos': info['meas_pos'].as_array.tolist(),
+                'meas_mom': info['meas_mom'].as_array.tolist(),
             })
 
     with open(os.path.join('data', f'{lbl}.json'), 'w') as ofile:

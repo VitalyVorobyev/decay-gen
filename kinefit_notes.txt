@@ -1,0 +1,5 @@
+sigma x = 319 mum
+sigma y = 435 mum
+sigma z = 2.38 mm
+
+collinear constraint
