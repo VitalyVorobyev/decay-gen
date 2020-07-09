@@ -212,6 +212,7 @@ def test_full_jacobian_from_helix():
     jac = full_jacobian_from_helix(hel, l, q, B)
 
     assert jac.shape == (N, 5, 6)
+    assert not np.isnan(jac).any()
 
 
 def test_helix_covariance():
@@ -221,6 +222,7 @@ def test_helix_covariance():
     cov = helix_covariance(hel)
 
     assert cov.shape == (N, 5, 5)
+    assert not np.isnan(cov).any()
 
 
 def test_sample_helix_resolution():
@@ -230,3 +232,5 @@ def test_sample_helix_resolution():
 
     assert cov.shape == (N, 5, 5)
     assert shel.as_array.shape == (N, 5)
+    assert not np.isnan(cov).any()
+    assert not np.isnan(shel.as_array).any()
