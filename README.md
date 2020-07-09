@@ -7,4 +7,4 @@ Toy Monte-Carlo generator of particle decays featuring simulation of track helix
 
 Phase space decay generation is done with the [zfit/phasespace](https://github.com/zfit/phasespace) package and Tensorflow backend. Flight lengths and resolution sampling is done with [Jax](https://github.com/google/jax).
 
-HelixGen can serialize event generated to json. Example of events generation can be found in [notebook](exmaples/genexample.ipynb).
+HelixGen can serialize events generated to a json object. Example of events generation can be found in [notebook](exmaples/genexample.ipynb).
