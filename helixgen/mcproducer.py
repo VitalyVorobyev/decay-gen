@@ -43,7 +43,7 @@ def produce_and_serialize_to_json(decstr: str, nevts: int, lbl: str):
                 'meas_mom': info['meas_mom'].as_array.tolist(),
             })
 
-    with open(os.path.join('data', f'{lbl}.json'), 'w') as ofile:
+    with open(os.path.join('./', f'{lbl}.json'), 'w') as ofile:
         ofile.write(json.dumps(data))
 
 
