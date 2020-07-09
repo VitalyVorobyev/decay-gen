@@ -1,7 +1,9 @@
 """ Unit tests for the cartesian package """
 
 import pytest
-from helixgen.cluster import *
+from helixgen.cartesian import Position, Momentum
+from helixgen.cluster import Cluster, momentum_from_cluster_jacobian, cartesian_to_cluster,\
+    momentum_from_cluster, cluster_covariance, sample_cluster_resolution
 import jax.random as rjax
 import jax.numpy as np
 
@@ -99,7 +101,7 @@ def test_cluster_covariance():
 def test_sample_cluster_resolution():
     N = 100
     clu = random_cluster(rng, N)
-    sclu, cov = sample_cluster_resolution(clu)
+    sclu, cov = sample_cluster_resolution(rng, clu)
 
     assert cov.shape == (N, 3, 3)
     assert sclu.as_array.shape == (N, 3)

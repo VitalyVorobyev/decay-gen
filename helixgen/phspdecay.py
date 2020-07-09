@@ -71,28 +71,28 @@ def generate_positions(rng, genpcls, pos0, pcl=None):
         generate_positions(rng, genpcls, pos0, ch)
 
 
-def apply_resolution_charged(pos: Position, mom: Momentum, pcl: Particle)\
+def apply_resolution_charged(rng: jax.random.PRNGKey, pos: Position, mom: Momentum, pcl: Particle)\
     -> (Helix, np.ndarray, Position, Momentum):
     """ returns measured helix, helix covariance, position and momentum """
     q, B = pcl.charge, 1.5
     hel, _ = cartesian_to_helix(pos, mom, q=q, B=B)
-    hel, cov = sample_helix_resolution(hel)
+    hel, cov = sample_helix_resolution(rng, hel)
     pos, mom = helix_to_cartesian(hel, l=0., q=q, B=B)
 
     return (hel, cov, pos, mom)
 
 
-def apply_resolution_photon(pos: Position, mom: Momentum)\
+def apply_resolution_photon(rng: jax.random.PRNGKey, pos: Position, mom: Momentum)\
     -> (Cluster, np.ndarray, Momentum):
     """ returns measured cluster, cluster covariance, and momentum """
     clu = cartesian_to_cluster(pos, mom)
-    clu, cov = sample_cluster_resolution(clu)
+    clu, cov = sample_cluster_resolution(rng, clu)
     mom = momentum_from_cluster(clu)
 
     return (clu, cov, mom)
 
 
-def generate(decstr: str, nevt: int):
+def generate(rng: jax.random.PRNGKey, decstr: str, nevt: int):
     """ Runs all steps of event generation:
      1. phase space momentum generator
      2. positions generator
@@ -102,7 +102,6 @@ def generate(decstr: str, nevt: int):
      6. covariance matrix for each helix and cluster
      All the reults are saved in dictionary
     """
-    rng = rjax.PRNGKey(seed=0)
     ws, genpcls = generate_phsp(decstr, nevt)
     # root particle position
     pos0 = np.zeros((nevt, 3))
@@ -113,14 +112,14 @@ def generate(decstr: str, nevt: int):
 
     for name, data in genpcls.items():
         if data['pcl'].name == 'gamma':
-            clu, cov, mom = apply_resolution_photon(data['pos'], data['mom'])
+            clu, cov, mom = apply_resolution_photon(rng, data['pos'], data['mom'])
             genpcls[name].update({
                 'clu': clu,
                 'clucov': cov,
                 'meas_mom': mom
             })
         elif data['pcl'].name in stable_charged:
-            hel, cov, pos, mom = apply_resolution_charged(data['pos'], data['mom'], data['pcl'])
+            hel, cov, pos, mom = apply_resolution_charged(rng, data['pos'], data['mom'], data['pcl'])
             genpcls[name].update({
                 'hel': hel,
                 'helcov': cov,

@@ -79,9 +79,8 @@ def cluster_covariance(clu: Cluster) -> (dtype):
         np.diag(np.array([10, 0.01, 0.03])**2)
 
 
-def sample_cluster_resolution(clu: Cluster) -> (Cluster, np.ndarray):
+def sample_cluster_resolution(rng: jax.random.PRNGKey, clu: Cluster) -> (Cluster, np.ndarray):
     """ Sample helix parameters given true parameters and covariance matrix """
-    rng = jax.random.PRNGKey(seed=0)
     cov = cluster_covariance(clu)
     mvn = jax.vmap(lambda cov: jax.random.multivariate_normal(rng, np.zeros(cov.shape[-1]), cov))
     return (Cluster.from_ndarray(clu.as_array + mvn(cov)), cov)

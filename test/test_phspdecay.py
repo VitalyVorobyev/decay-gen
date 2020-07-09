@@ -1,7 +1,9 @@
 """ Unit tests for the phspdecay package """
 
 from helixgen.phspdecay import pname, generate
-import numpy as np
+import jax.random as rjax
+
+rng = rjax.PRNGKey(seed=0)
 
 def test_pname():
     for name in ['pi+', 'pi-', 'K+', 'K-', 'gamma', 'pi0', 'K(S)0',\
@@ -13,7 +15,7 @@ def test_pname():
 
 def test_generate():
     N = 100
-    w, genpcls = generate('', N)
+    w, genpcls = generate(rng, '', N)
 
     assert w.shape == (N, )
     assert genpcls['K-']['mom'].as_array.shape == (N, 3)

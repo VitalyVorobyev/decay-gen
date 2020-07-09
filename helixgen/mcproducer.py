@@ -11,13 +11,14 @@
 
 import os
 import json
+import jax
 
 from .phspdecay import generate
 
 
-def produce_and_serialize_to_json(decstr: str, nevts: int, lbl: str):
+def produce_and_serialize_to_json(rng: jax.random.PRNGKey, decstr: str, nevts: int, lbl: str):
     """ """
-    weights, genpcls = generate(decstr, nevts)
+    weights, genpcls = generate(rng, decstr, nevts)
 
     data = {'weights': weights.tolist()}
 
@@ -45,7 +46,3 @@ def produce_and_serialize_to_json(decstr: str, nevts: int, lbl: str):
 
     with open(os.path.join('./', f'{lbl}.json'), 'w') as ofile:
         ofile.write(json.dumps(data))
-
-
-if __name__ == '__main__':
-    produce_and_serialize_to_json('D+ -> [K*(892)0 -> K- pi+] pi+', 100, 'dkstpi')

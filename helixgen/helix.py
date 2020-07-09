@@ -128,9 +128,8 @@ def helix_covariance(hel: Helix) -> (dtype):
         np.diag(np.array([0.01, 0.01, 0.03, 0.01, 0.01])**2)
 
 
-def sample_helix_resolution(hel: Helix) -> (Helix, np.ndarray):
+def sample_helix_resolution(rng: jax.random.PRNGKey, hel: Helix) -> (Helix, np.ndarray):
     """ Sample helix parameters given true parameters and covariance matrix """
-    rng = jax.random.PRNGKey(seed=0)
     cov = helix_covariance(hel)
     mvn = jax.vmap(lambda cov: jax.random.multivariate_normal(rng, np.zeros(cov.shape[-1]), cov))
     return (Helix.from_ndarray(hel.as_array + mvn(cov)), cov)

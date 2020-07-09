@@ -2,7 +2,9 @@
 
 import pytest
 from helixgen.cartesian import Position, Momentum
-from helixgen.helix import *
+from helixgen.helix import Helix, position_from_helix, momentum_from_helix, helix_to_cartesian,\
+    cartesian_to_helix, position_from_helix_jacobian, momentum_from_helix_jacobian,\
+        full_jacobian_from_helix, helix_covariance, sample_helix_resolution
 import jax.random as rjax
 import jax.numpy as np
 
@@ -228,7 +230,7 @@ def test_helix_covariance():
 def test_sample_helix_resolution():
     N = 100
     hel = Helix.from_ndarray(rjax.uniform(rng, (N, 5)))
-    shel, cov = sample_helix_resolution(hel)
+    shel, cov = sample_helix_resolution(rng, hel)
 
     assert cov.shape == (N, 5, 5)
     assert shel.as_array.shape == (N, 5)
