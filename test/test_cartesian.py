@@ -1,7 +1,7 @@
 """ Unit tests for the cartesian package """
 
 import pytest
-from cartesian import Position, Momentum
+from helixgen.cartesian import Position, Momentum
 import jax.random as rjax
 import jax.numpy as np
 

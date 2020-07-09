@@ -3,9 +3,9 @@
 from phasespace import GenParticle
 from particle import Particle
 
-from cartesian import Momentum, Position
-from helix import Helix, cartesian_to_helix, helix_to_cartesian, sample_helix_resolution
-from cluster import Cluster, cartesian_to_cluster, sample_cluster_resolution, momentum_from_cluster
+from .cartesian import Momentum, Position
+from .helix import Helix, cartesian_to_helix, helix_to_cartesian, sample_helix_resolution
+from .cluster import Cluster, cartesian_to_cluster, sample_cluster_resolution, momentum_from_cluster
 
 import jax.numpy as np
 import jax.random as rjax
@@ -63,8 +63,8 @@ def generate_positions(rng, genpcls, pos0, pcl=None):
     for ch in pcl.children:
         particle = genpcls[ch.name]['pcl']
         if particle.lifetime > 0.0001 and particle.lifetime < 1:
-            nevt = mom.shape[0]
             mom = genpcls[ch.name]['mom']
+            nevt = mom.shape[0]
             rng, key = rjax.split(rng)
             time = particle.lifetime*rjax.exponential(key, (nevt,))
             pos0 = pos0 + direction(mom) * time

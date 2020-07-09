@@ -12,7 +12,7 @@ from typing import NamedTuple
 import jax.numpy as np
 import jax
 
-from cartesian import Position, Momentum, alpha
+from .cartesian import Position, Momentum, alpha
 
 dtype = np.ndarray
 
@@ -129,14 +129,9 @@ def helix_covariance(hel: Helix) -> (dtype):
     ]))**2 * eps**2
 
 
-@jax.vmap
-def sample_helix_resolution(hel: Helix) -> (Helix):
+def sample_helix_resolution(hel: Helix) -> (Helix, np.ndarray):
     """ Sample helix parameters given true parameters and covariance matrix """
     rng = jax.random.PRNGKey(seed=0)
     cov = helix_covariance(hel)
-    dhel = jax.random.multivariate_normal(rng, np.zeros((cov.shape[-1])), cov)
-    return (Helix.from_ndarray(hel.as_array + dhel), cov)
-
-
-# helix_covariance = jax.vmap(helix_covariance_flat)
-# sample_helix_resolution = jax.vmap(sample_helix_resolution_flat)
+    mvn = jax.vmap(lambda cov: jax.random.multivariate_normal(rng, np.zeros(cov.shape[-1]), cov))
+    return (Helix.from_ndarray(hel.as_array + mvn(cov)), cov)

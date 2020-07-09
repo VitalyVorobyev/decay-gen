@@ -12,10 +12,10 @@
 import os
 import json
 
-from phspdecay import generate
+from .phspdecay import generate
 
 
-def produce(decstr: str, nevts: int, lbl: str):
+def produce_and_serialize_to_json(decstr: str, nevts: int, lbl: str):
     """ """
     weights, genpcls = generate(decstr, nevts)
 
@@ -48,4 +48,4 @@ def produce(decstr: str, nevts: int, lbl: str):
 
 
 if __name__ == '__main__':
-    produce('D+ -> [K*(892)0 -> K- pi+] pi+', 100, 'dkstpi')
+    produce_and_serialize_to_json('D+ -> [K*(892)0 -> K- pi+] pi+', 100, 'dkstpi')

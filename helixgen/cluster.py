@@ -8,12 +8,11 @@
 """
 
 from typing import NamedTuple
-import numpy as onp
 
 import jax.numpy as np
 import jax
 
-from cartesian import Position, Momentum
+from .cartesian import Position, Momentum
 
 dtype = np.ndarray
 
@@ -53,8 +52,8 @@ def cartesian_to_cluster(pos: Position, mom: Momentum, R=1000) -> (Cluster):
         )) / mom_total_squared
     else:  # takes into account that R >> particle flight length
         alpha = R / mom_total - pos_mom_scalar_product / mom_total_squared
-    
-    cluster_position = Position.from_ndarray(pos.as_array + alpha * mom.as_array)
+
+    cluster_position = Position.from_ndarray(pos.as_array + alpha.reshape(-1, 1) * mom.as_array)
 
     return Cluster.from_ndarray(np.column_stack([
         mom_total, cluster_position.costh, cluster_position.phi
@@ -80,10 +79,10 @@ def cluster_covariance(clu: Cluster) -> (dtype):
         clu.energy, clu.costh, clu.phi
     ]))**2 * eps**2
 
-@jax.vmap
-def sample_cluster_resolution(clu: Cluster) -> (Cluster):
+
+def sample_cluster_resolution(clu: Cluster) -> (Cluster, np.ndarray):
     """ Sample helix parameters given true parameters and covariance matrix """
     rng = jax.random.PRNGKey(seed=0)
     cov = cluster_covariance(clu)
-    dclu = jax.random.multivariate_normal(rng, np.zeros((cov.shape[-1])), cov)
-    return Cluster.from_ndarray(clu.as_array + dclu)
+    mvn = jax.vmap(lambda cov: jax.random.multivariate_normal(rng, np.zeros(cov.shape[-1]), cov))
+    return (Cluster.from_ndarray(clu.as_array + mvn(cov)), cov)

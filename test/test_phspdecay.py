@@ -1,6 +1,6 @@
 """ Unit tests for the phspdecay package """
 
-from phspdecay import pname, generate
+from helixgen.phspdecay import pname, generate
 import numpy as np
 
 def test_pname():
@@ -21,4 +21,4 @@ def test_generate():
     assert genpcls['K-']['hel'].as_array.shape == (N, 5)
     assert genpcls['K-']['meas_pos'].as_array.shape == (N, 3)
     assert genpcls['K-']['meas_mom'].as_array.shape == (N, 3)
-    assert genpcls['K-']['helcov'].as_array.shape == (N, 5, 5)
+    assert genpcls['K-']['helcov'].shape == (N, 5, 5)

@@ -1,8 +1,8 @@
 """ Unit tests for the helix package """
 
 import pytest
-from cartesian import Position, Momentum
-from helix import *
+from helixgen.cartesian import Position, Momentum
+from helixgen.helix import *
 import jax.random as rjax
 import jax.numpy as np
 
@@ -136,14 +136,16 @@ def test_cartesian_to_helix():
     hel, l = cartesian_to_helix(pos, mom, q, B)
     pos2, mom2 = helix_to_cartesian(hel, l, q, B)
 
-    assert np.allclose(pos.x, pos2.x)
-    assert np.allclose(pos.y, pos2.y)
-    assert np.allclose(pos.z, pos2.z)
-    assert np.allclose(pos.as_array, pos2.as_array)
-    assert np.allclose(mom.px, mom2.px)
-    assert np.allclose(mom.py, mom2.py)
-    assert np.allclose(mom.pz, mom2.pz)
-    assert np.allclose(mom.as_array, mom2.as_array)
+    rtol, atol = 1.e-4, 1.e-4
+
+    assert np.allclose(pos.x, pos2.x, rtol=rtol, atol=atol)
+    assert np.allclose(pos.y, pos2.y, rtol=rtol, atol=atol)
+    assert np.allclose(pos.z, pos2.z, rtol=rtol, atol=atol)
+    assert np.allclose(pos.as_array, pos2.as_array, rtol=rtol, atol=atol)
+    assert np.allclose(mom.px, mom2.px, rtol=rtol, atol=atol)
+    assert np.allclose(mom.py, mom2.py, rtol=rtol, atol=atol)
+    assert np.allclose(mom.pz, mom2.pz, rtol=rtol, atol=atol)
+    assert np.allclose(mom.as_array, mom2.as_array, rtol=rtol, atol=atol)
 
 
 @pytest.mark.skip(reason='ambiguity in helix parameter')
@@ -180,7 +182,9 @@ def test_position_from_helix_jacobian():
 
     jac = position_from_helix_jacobian(hel, l, q, B)
 
-    assert jac.shape == (N, 5, 3)
+    assert jac.x.as_array.shape == (N, 5)
+    assert jac.y.as_array.shape == (N, 5)
+    assert jac.z.as_array.shape == (N, 5)
 
 
 def test_momentum_from_helix_jacobian():
@@ -193,7 +197,9 @@ def test_momentum_from_helix_jacobian():
 
     jac = momentum_from_helix_jacobian(hel, l, q, B)
 
-    assert jac.shape == (N, 5, 3)
+    assert jac.px.as_array.shape == (N, 5)
+    assert jac.py.as_array.shape == (N, 5)
+    assert jac.pz.as_array.shape == (N, 5)
 
 def test_full_jacobian_from_helix():
     """ """
@@ -220,6 +226,7 @@ def test_helix_covariance():
 def test_sample_helix_resolution():
     N = 100
     hel = Helix.from_ndarray(rjax.uniform(rng, (N, 5)))
-    shel = sample_helix_resolution(hel)
+    shel, cov = sample_helix_resolution(hel)
 
+    assert cov.shape == (N, 5, 5)
     assert shel.as_array.shape == (N, 5)
