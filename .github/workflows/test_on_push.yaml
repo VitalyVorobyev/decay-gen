@@ -21,3 +21,5 @@ jobs:
       run: coverage run -m pytest -rs
     - name: Tests report
       run: coverage report
+    - name: Codecov
+      uses: codecov/codecov-action@v1.0.10
