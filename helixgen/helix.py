@@ -11,6 +11,7 @@ from typing import NamedTuple
 
 import jax.numpy as np
 import jax
+import numpy as onp
 
 from .cartesian import Position, Momentum, alpha
 
@@ -129,7 +130,17 @@ def helix_covariance(hel: Helix) -> (dtype):
 
 
 def sample_helix_resolution(rng: jax.random.PRNGKey, hel: Helix) -> (Helix, np.ndarray):
-    """ Sample helix parameters given true parameters and covariance matrix """
+    """ Sample helix parameters given true parameters and covariance matrix
+        TODO: find out how to vectorize multivariate_normal
+    """
     cov = helix_covariance(hel)
-    mvn = jax.vmap(lambda cov: jax.random.multivariate_normal(rng, np.zeros(cov.shape[-1]), cov))
-    return (Helix.from_ndarray(hel.as_array + mvn(cov)), cov)
+
+    helarr = hel.as_array
+    newhel = onp.empty(helarr.shape)
+    for i, [h, c] in enumerate(zip(helarr, cov)):
+        newhel[i,:] = h + onp.random.multivariate_normal(onp.zeros(c.shape[-1]), c)
+    
+    return (Helix.from_ndarray(newhel), cov)
+
+    # mvn = jax.vmap(lambda c: jax.random.multivariate_normal(rng, np.zeros(c.shape[-1]), c))
+    # return (Helix.from_ndarray(hel.as_array + mvn(cov)), cov)

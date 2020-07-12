@@ -25,7 +25,7 @@ def generate_phsp(decstr: str, nevt: int) -> (np.ndarray, dict):
     kaon, pkaon = pname('K-', 'K-')
     kstar, pkstar = pname('K*(892)0', 'K*0')
     kstar.set_children(pion, kaon)
-    pion_dplus, dpion_dplus = pname('pi+', 'D0_pi+')
+    pion_dplus, dpion_dplus = pname('pi+', 'D+_pi+')
     dplus, _ = pname('D+', 'D+')
     dplus.set_children(kstar, pion_dplus)
 
@@ -35,7 +35,7 @@ def generate_phsp(decstr: str, nevt: int) -> (np.ndarray, dict):
         'pi+': {'pcl': ppion},
         'K-': {'pcl': pkaon},
         'K*0': {'pcl': pkstar},
-        'D0_pi+': {'pcl': dpion_dplus},
+        'D+_pi+': {'pcl': dpion_dplus},
         'root': {'gpcl': dplus},
     }
 
