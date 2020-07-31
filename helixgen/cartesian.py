@@ -55,6 +55,11 @@ class Position(NamedTuple):
     def as_array(self) -> (np.ndarray):
         return np.column_stack([self.x, self.y, self.z])
 
+    @property
+    def size(self) -> (int):
+        if isinstance(self.x, np.ndarray):
+            return self.x.size
+        return 1
 
     def __sub__(self, rhs):
         """ Position subtraction """
@@ -84,6 +89,32 @@ class Momentum(NamedTuple):
         return Momentum(*[data[:,i] for i in range(3)])
 
     @property
+    def size(self) -> (int):
+        if isinstance(self.px, np.ndarray):
+            return self.px.size
+        return 1
+
+    @property
+    def direction(self) -> (np.ndarray):
+        """ Unit vector along the momentum direction """
+        return self.as_array / self.ptot
+
+
+    def velocity(self, mass) -> (np.ndarray):
+        """ Dimensionless velocity vector assuming given mass """
+        return self.as_array / self.energy(mass).reshape(-1, 1)
+
+
+    def energy(self, mass) -> (np.ndarray):
+        """ Energy for a given mass """
+        return np.sqrt(mass**2 + self.ptot_squared)
+
+
+    def vtot(self, mass) -> (dtype):
+        """ Total dimensionless velocity """
+        return self.ptot / self.energy(mass)
+
+    @property
     def as_array(self) -> (np.ndarray):
         return np.column_stack([self.px, self.py, self.pz])
 
@@ -93,9 +124,14 @@ class Momentum(NamedTuple):
         return np.sqrt(self.px**2 + self.py**2)
 
     @property
+    def ptot_squared(self) -> (dtype):
+        """ Total momentum """
+        return self.px**2 + self.py**2 + self.pz**2
+
+    @property
     def ptot(self) -> (dtype):
         """ Total momentum """
-        return np.sqrt(self.px**2 + self.py**2 + self.pz**2)
+        return np.sqrt(self.ptot_squared)
 
     @property
     def costh(self) -> (dtype):

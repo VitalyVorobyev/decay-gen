@@ -16,11 +16,11 @@ def test_pname():
 def test_generate():
     N = 100
     w, genpcls = generate(rng, '', N)
-
+    key = 'pi+'
     assert w.shape == (N, )
-    assert genpcls['K-']['mom'].as_array.shape == (N, 3)
-    assert genpcls['K-']['pos'].as_array.shape == (N, 3)
-    assert genpcls['K-']['hel'].as_array.shape == (N, 5)
-    assert genpcls['K-']['meas_pos'].as_array.shape == (N, 3)
-    assert genpcls['K-']['meas_mom'].as_array.shape == (N, 3)
-    assert genpcls['K-']['helcov'].shape == (N, 5, 5)
+    assert genpcls[key]['mom'].as_array.shape == (N, 3)
+    assert genpcls[key]['pos'].as_array.shape == (N, 3)
+    assert genpcls[key]['hel'].as_array.shape == (N, 5)
+    assert genpcls[key]['meas_pos'].as_array.shape == (N, 3)
+    assert genpcls[key]['meas_mom'].as_array.shape == (N, 3)
+    assert genpcls[key]['helcov'].shape == (N, 5, 5)

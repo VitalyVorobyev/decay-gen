@@ -2,6 +2,7 @@
 
 from phasespace import GenParticle
 from particle import Particle
+import tensorflow as tf
 
 from .cartesian import Momentum, Position
 from .helix import Helix, cartesian_to_helix, helix_to_cartesian, sample_helix_resolution
@@ -17,10 +18,8 @@ def pname(lbl: str, name: str) -> (GenParticle, Particle):
     p = Particle.findall(lbl)[0]
     return (GenParticle(name, p.mass), p)
 
-
-def generate_phsp(decstr: str, nevt: int) -> (np.ndarray, dict):
-    """ TODO: temporary generator that produces fixed decay chain.
-    Should be able to parse decay string and produce decay chain accordingly """
+def dp_to_kstz_pip(nevt: int) -> ((tf.Tensor, tf.Tensor), dict):
+    """ D+ -> [K*0 -> K- pi+] pi+ decay generator """
     pion, ppion = pname('pi+', 'pi+')
     kaon, pkaon = pname('K-', 'K-')
     kstar, pkstar = pname('K*(892)0', 'K*0')
@@ -28,8 +27,6 @@ def generate_phsp(decstr: str, nevt: int) -> (np.ndarray, dict):
     pion_dplus, dpion_dplus = pname('pi+', 'D+_pi+')
     dplus, _ = pname('D+', 'D+')
     dplus.set_children(kstar, pion_dplus)
-
-    weights, particles = dplus.generate(n_events=nevt)
 
     genpcls = {
         'pi+': {'pcl': ppion},
@@ -39,16 +36,46 @@ def generate_phsp(decstr: str, nevt: int) -> (np.ndarray, dict):
         'root': {'gpcl': dplus},
     }
 
+    return (dplus.generate(n_events=nevt), genpcls)
+
+def dz_to_ks_pip_pim(nevt: int) -> ((tf.Tensor, tf.Tensor), dict):
+    """ D0 -> [Ks0 -> pi+ pi-] pi+ pi- decay generator """
+    pip_ks, ppip_ks = pname('pi+', 'pi+_Ks0')
+    pim_ks, ppim_ks = pname('pi-', 'pi-_Ks0')
+    ks, pks = pname('K(S)0', 'Ks0')
+    ks.set_children(pip_ks, pim_ks)
+    pip, ppip = pname('pi+', 'pi+')
+    pim, ppim = pname('pi-', 'pi-')
+    dz, _ = pname('D0', 'D0')
+    dz.set_children(ks, pip, pim)
+
+    genpcls = {
+        'pi+_Ks0': {'pcl': ppip_ks},
+        'pi-_Ks0': {'pcl': ppim_ks},
+        'Ks0': {'pcl': pks},
+        'pi+': {'pcl': ppip},
+        'pi-': {'pcl': ppim},
+        'root': {'gpcl': dz},
+    }
+    
+    return (dz.generate(n_events=nevt), genpcls)
+
+def generate_phsp(decstr: str, nevt: int) -> (np.ndarray, dict):
+    """ TODO: temporary generator that produces fixed decay chain.
+    Should be able to parse decay string and produce decay chain accordingly """
+    # (weights, particles), genpcls = dp_to_kstz_pip(nevt)
+    (weights, particles), genpcls = dz_to_ks_pip_pim(nevt)
+
     for key, mom in particles.items():
         genpcls[key]['mom'] = Momentum.from_ndarray(mom.numpy()[:,:-1])
 
     return (np.array(weights.numpy()), genpcls)
 
 
-@jax.vmap
-def direction(mom):
-    """ """
-    return mom / np.sqrt(np.sum(mom**2))
+# @jax.vmap
+# def direction(mom):
+#     """ """
+#     return mom / np.sqrt(np.sum(mom**2))
 
 
 def generate_positions(rng, genpcls, pos0, pcl=None):
@@ -64,10 +91,11 @@ def generate_positions(rng, genpcls, pos0, pcl=None):
         particle = genpcls[ch.name]['pcl']
         if particle.lifetime > 0.0001 and particle.lifetime < 1:
             mom = genpcls[ch.name]['mom']
-            nevt = mom.shape[0]
+            nevt = mom.size
             rng, key = rjax.split(rng)
-            time = particle.lifetime*rjax.exponential(key, (nevt,))
-            pos0 = pos0 + direction(mom) * time
+            time = particle.lifetime * rjax.exponential(key, (nevt, 1))
+            # TODO: add gamma factor multiplier here (relativistic correction)
+            pos0 = pos0 + mom.velocity(particle.mass) * time
         generate_positions(rng, genpcls, pos0, ch)
 
 

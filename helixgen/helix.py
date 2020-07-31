@@ -124,9 +124,9 @@ def full_jacobian_from_helix(hel: Helix, l: dtype, q: int, B: float) -> (dtype):
 @jax.vmap
 def helix_covariance(hel: Helix) -> (dtype):
     """ [d0, phi0 omega, z0, tan(lambda)] """
-    eps = 5.e-2
-    return np.diag(np.abs(np.array([hel.d0, hel.phi0, hel.z0, hel.omega, hel.tanl]))**2) * eps**2 +\
-        np.diag(np.array([0.01, 0.01, 0.03, 0.01, 0.01])**2)
+    eps = 2.e-2
+    return np.diag(np.abs(np.array([hel.d0, hel.phi0, 0.1*hel.z0, hel.omega, hel.tanl]))**2) * eps**2 +\
+        np.diag(np.array([0.08, 0.01, 0.001, 0.01, 0.001])**2)
 
 
 def sample_helix_resolution(rng: jax.random.PRNGKey, hel: Helix) -> (Helix, np.ndarray):
