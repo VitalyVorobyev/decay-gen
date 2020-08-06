@@ -14,35 +14,31 @@ import json
 import jax
 
 from .phspdecay import generate
+from .resolution import apply_resolution
+from .resolution import apply_resolution_neutral, apply_resolution_neutral_cartesian
+from .resolution import apply_resolution_charged, apply_resolution_charged_cartesian
 
-
-def produce_and_serialize_to_json(rng: jax.random.PRNGKey, decstr: str, nevts: int, lbl: str):
+def produce_and_serialize_to_json(
+        rng: jax.random.PRNGKey,
+        decstr: str,
+        nevts: int,
+        lbl: str,
+        cart_cov_clu=False,
+        cart_cov_hel=False):
     """ """
-    weights, genpcls = generate(rng, decstr, nevts)
+    smerer = lambda rng, gp: apply_resolution(
+        rng, gp,
+        (apply_resolution_neutral_cartesian if cart_cov_clu else apply_resolution_charged),
+        (apply_resolution_charged_cartesian if cart_cov_hel else apply_resolution_charged)
+    )
+    weights, genpcls = generate(rng, decstr, nevts, smerer)
 
     data = {'weights': weights.tolist()}
 
     for pname, info in genpcls.items():
         data[pname] = {
-            'mom': info['mom'].as_array.tolist(),
-            'pos': info['pos'].as_array.tolist(),
-            'pdgid': info['pcl'].pdgid,
-            'pdgname': info['pcl'].name,
-            'pdgmass': info['pcl'].mass,
-        }
-        if 'clu' in info:  # photon
-            data[pname].update({
-                'clu': info['clu'].as_array.tolist(),
-                'clucov': info['clucov'].tolist(),
-                'meas_mom': info['meas_mom'].as_array.tolist(),
-            })
-        elif 'hel' in info:  # stable charged
-            data[pname].update({
-                'hel': info['hel'].as_array.tolist(),
-                'helcov': info['helcov'].tolist(),
-                'meas_pos': info['meas_pos'].as_array.tolist(),
-                'meas_mom': info['meas_mom'].as_array.tolist(),
-            })
+            key: (val.tolist() if hasattr(val, 'as_array') else\
+                  val.as_array.tolist()) for key, val in info}
 
     with open(os.path.join('./', f'{lbl}.json'), 'w') as ofile:
         ofile.write(json.dumps(data))

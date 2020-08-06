@@ -70,17 +70,3 @@ def momentum_from_cluster(clu: Cluster) -> (Momentum):
     ]))
 
 momentum_from_cluster_jacobian = jax.vmap(jax.jacfwd(momentum_from_cluster))
-
-@jax.vmap
-def cluster_covariance(clu: Cluster) -> (dtype):
-    """ [energy, costh, phi] """
-    eps = 5.e-2
-    return np.diag(np.array([clu.energy, clu.costh, clu.phi])**2) * eps**2 +\
-        np.diag(np.array([10, 0.01, 0.03])**2)
-
-
-def sample_cluster_resolution(rng: jax.random.PRNGKey, clu: Cluster) -> (Cluster, np.ndarray):
-    """ Sample helix parameters given true parameters and covariance matrix """
-    cov = cluster_covariance(clu)
-    mvn = jax.vmap(lambda cov: jax.random.multivariate_normal(rng, np.zeros(cov.shape[-1]), cov))
-    return (Cluster.from_ndarray(clu.as_array + mvn(cov)), cov)

@@ -1,13 +1,14 @@
 """ Unit tests for the cartesian package """
 
-import pytest
 from helixgen.cartesian import Position, Momentum
-from helixgen.cluster import Cluster, momentum_from_cluster_jacobian, cartesian_to_cluster,\
-    momentum_from_cluster, cluster_covariance, sample_cluster_resolution
+from helixgen.cluster import Cluster, momentum_from_cluster_jacobian
+from helixgen.cluster import cartesian_to_cluster, momentum_from_cluster
+
 import jax.random as rjax
 import jax.numpy as np
 
 rng = rjax.PRNGKey(seed=0)
+
 
 def random_cluster(rng, N):
     """ Helper function """
@@ -15,6 +16,7 @@ def random_cluster(rng, N):
     costh = rjax.uniform(rng, (N,), minval=-1., maxval=1.)
     phi = rjax.uniform(rng, (N,), minval=-np.pi, maxval=np.pi)
     return Cluster(energy, costh, phi)
+
 
 def test_cluster_ctor():
     """ """
@@ -87,21 +89,3 @@ def test_momentum_from_cluster():
     mom = momentum_from_cluster(clu)
     
     assert mom.as_array.shape == (N, 3)
-
-
-def test_cluster_covariance():
-    """ """
-    N = 100
-    clu = random_cluster(rng, N)
-    cov = cluster_covariance(clu)
-
-    assert cov.shape == (N, 3, 3)
-
-
-def test_sample_cluster_resolution():
-    N = 100
-    clu = random_cluster(rng, N)
-    sclu, cov = sample_cluster_resolution(rng, clu)
-
-    assert cov.shape == (N, 3, 3)
-    assert sclu.as_array.shape == (N, 3)
