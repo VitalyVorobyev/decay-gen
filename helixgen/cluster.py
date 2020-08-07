@@ -4,7 +4,7 @@
         - Vitaly Vorobyev (vit.vorobiev@gmail.com)
 
     Created: July 2020
-    Modified: July 2020
+    Modified: August 2020
 """
 
 from typing import NamedTuple
@@ -16,6 +16,7 @@ from .cartesian import Position, Momentum
 
 dtype = np.ndarray
 
+
 class Cluster(NamedTuple):
     """ Calorimeter cluster """
     energy: dtype  # energy
@@ -26,7 +27,7 @@ class Cluster(NamedTuple):
     def from_ndarray(data: np.ndarray):
         """ """
         assert data.shape[1] == 3
-        return Cluster(*[data[:,i] for i in range(3)])
+        return Cluster(*[data[:, i] for i in range(3)])
 
     @property
     def as_array(self) -> (np.ndarray):
@@ -44,7 +45,7 @@ def cartesian_to_cluster(pos: Position, mom: Momentum, R=1000) -> (Cluster):
     pos_mom_scalar_product = pos.x*mom.px + pos.y*mom.py + pos.z*mom.pz
     mom_total = mom.ptot
     mom_total_squared = mom_total**2
-    
+
     full_computation = False
     if full_computation:
         alpha = (-pos_mom_scalar_product + np.sqrt(
@@ -53,7 +54,8 @@ def cartesian_to_cluster(pos: Position, mom: Momentum, R=1000) -> (Cluster):
     else:  # takes into account that R >> particle flight length
         alpha = R / mom_total - pos_mom_scalar_product / mom_total_squared
 
-    cluster_position = Position.from_ndarray(pos.as_array + alpha.reshape(-1, 1) * mom.as_array)
+    cluster_position = Position.from_ndarray(
+        pos.as_array + alpha.reshape(-1, 1) * mom.as_array)
 
     return Cluster.from_ndarray(np.column_stack([
         mom_total, cluster_position.costh, cluster_position.phi
@@ -68,5 +70,6 @@ def momentum_from_cluster(clu: Cluster) -> (Momentum):
         clu.energy * sinth * np.cos(clu.phi),
         clu.energy * clu.costh,
     ]))
+
 
 momentum_from_cluster_jacobian = jax.vmap(jax.jacfwd(momentum_from_cluster))

@@ -65,18 +65,19 @@ def dz_to_ks_pip_pim(nevt: int) -> ((tf.Tensor, tf.Tensor), dict):
         'pi-': {'pcl': ppim},
         'root': {'gpcl': dz},
     }
-    
+
     return (dz.generate(n_events=nevt), genpcls)
 
 
 def generate_phsp(decstr: str, nevt: int) -> (np.ndarray, dict):
     """ TODO: temporary generator that produces fixed decay chain.
-    Should be able to parse decay string and produce decay chain accordingly """
+    Should be able to parse decay string and produce decay chain accordingly
+    """
     # (weights, particles), genpcls = dp_to_kstz_pip(nevt)
     (weights, particles), genpcls = dz_to_ks_pip_pim(nevt)
 
     for key, mom in particles.items():
-        genpcls[key]['mom'] = Momentum.from_ndarray(mom.numpy()[:,:-1])
+        genpcls[key]['mom'] = Momentum.from_ndarray(mom.numpy()[:, :-1])
 
     return (np.array(weights.numpy()), genpcls)
 
