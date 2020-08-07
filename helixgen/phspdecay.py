@@ -117,4 +117,4 @@ def generate(rng: rjax.PRNGKey, decstr: str, nevt: int, smearer: Callable):
     pos0 = np.zeros((nevt, 3))
     generate_positions(rng, genpcls, pos0)
     genpcls.pop('root')
-    return (ws, smearer(genpcls))
+    return (ws, smearer(rng, genpcls))

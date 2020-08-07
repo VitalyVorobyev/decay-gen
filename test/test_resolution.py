@@ -82,12 +82,9 @@ def test_sample_momentum_resolution():
 def test_sample_cluster_resolution():
     N = 100
     clu = Cluster.from_ndarray(rjax.uniform(rng, (N, 3)))
-    sclu, cov = sample_momentum_resolution(rng, clu)
+    sclu, cov = sample_cluster_resolution(rng, clu)
 
     assert cov.shape == (N, 3, 3)
     assert sclu.as_array.shape == (N, 3)
     assert not np.isnan(cov).any()
     assert not np.isnan(sclu.as_array).any()
-
-# def test_apply_resolution_charged_cartesian():
-#     pass

@@ -100,7 +100,7 @@ def apply_resolution_charged_cartesian(
         'meas_mom': mom_smeared,
         'poscov': poscov,
         'momcov': momcov,
-        'mean_hel': cartesian_to_helix(pos_smeared, mom_smeared, q=q, B=B)[0],
+        'meas_hel': cartesian_to_helix(pos_smeared, mom_smeared, q=q, B=B)[0],
         'hel': cartesian_to_helix(pos, mom, q=q, B=B)[0],
     }
 
