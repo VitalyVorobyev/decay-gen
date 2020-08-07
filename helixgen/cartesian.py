@@ -14,10 +14,11 @@ import jax.numpy as np
 import jax
 
 rng = jax.random.PRNGKey(seed=0)
-    
+
 dtype = np.ndarray
 
 speedOfLight = 29.9792458  # [cm / ns]
+
 
 def alpha(B):
     """ Magnetic field to smth """
@@ -34,13 +35,12 @@ class Position(NamedTuple):
     def from_ndarray(data: np.ndarray):
         """ """
         assert data.shape[1] == 3
-        return Position(*[data[:,i] for i in range(3)])
+        return Position(*[data[:, i] for i in range(3)])
 
     @property
     def r(self) -> (dtype):
         """ Total length """
         return np.sqrt(self.x**2 + self.y**2 + self.z**2)
-
 
     @property
     def costh(self) -> (dtype):
@@ -66,17 +66,15 @@ class Position(NamedTuple):
         """ Position subtraction """
         return Position.from_ndarray(self.as_array - rhs.as_array)
 
-
     def __div__(self, coef: float):
         """ Division by float """
         return Position.from_ndarray(self.as_array / coef)
-
 
     def __mul__(self, coef: float):
         """ Multiplication by float """
         return Position.from_ndarray(self.as_array * coef)
 
-    
+
 class Momentum(NamedTuple):
     """ Particle momentum """
     px: dtype
@@ -87,7 +85,7 @@ class Momentum(NamedTuple):
     def from_ndarray(data: np.ndarray):
         """ """
         assert data.shape[1] == 3
-        return Momentum(*[data[:,i] for i in range(3)])
+        return Momentum(*[data[:, i] for i in range(3)])
 
     @property
     def size(self) -> (int):
@@ -100,16 +98,13 @@ class Momentum(NamedTuple):
         """ Unit vector along the momentum direction """
         return self.as_array / self.ptot
 
-
     def velocity(self, mass) -> (np.ndarray):
         """ Dimensionless velocity vector assuming given mass """
         return self.as_array / self.energy(mass).reshape(-1, 1)
 
-
     def energy(self, mass) -> (np.ndarray):
         """ Energy for a given mass """
         return np.sqrt(mass**2 + self.ptot_squared)
-
 
     def vtot(self, mass) -> (dtype):
         """ Total dimensionless velocity """
@@ -144,23 +139,18 @@ class Momentum(NamedTuple):
         """ Azimuth angle. arctan2 chooses the quadrant correctly """
         return np.arctan2(self.py, self.px)
 
-
     def px0(self, pos: Position, q: dtype, B: float) -> (dtype):
         """ Helper function for helix """
         return self.px + pos.y * q * alpha(B)
-
 
     def py0(self, pos: Position, q: dtype, B: float) -> (dtype):
         """ Helper function for helix """
         return self.py - pos.x * q * alpha(B)
 
-
-    def pt0(self, pos: Position, q: dtype, B: float)\
-        -> (dtype):
+    def pt0(self, pos: Position, q: dtype, B: float) -> (dtype):
         """ Helper function for helix """
         return np.sqrt(self.px0(pos, q, B)**2 +
                        self.py0(pos, q, B)**2)
-
 
     def phi0pt0(self, pos: Position, q: dtype, B: float) -> (dtype):
         """ Helper function that calculates phi0 and pt0 efficiently """

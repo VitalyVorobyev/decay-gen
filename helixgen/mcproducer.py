@@ -18,16 +18,22 @@ from particle import Particle
 from .phspdecay import generate
 from . import resolution as res
 
+
 def produce_and_serialize_to_json(
         rng: jax.random.PRNGKey,
         decstr: str, nevts: int, lbl: str,
         cart_cov_clu=False, cart_cov_hel=False):
     """ Main routine for event generation """
-    smearer = lambda rng, gp: res.apply_resolution(
-        rng, gp,
-        (res.apply_resolution_neutral_cartesian if cart_cov_clu else res.apply_resolution_charged),
-        (res.apply_resolution_charged_cartesian if cart_cov_hel else res.apply_resolution_charged)
-    )
+
+    def smearer(rng, gp):
+        """ Resolution producer """
+        return res.apply_resolution(
+            rng, gp,
+            (res.apply_resolution_neutral_cartesian if cart_cov_clu else
+             res.apply_resolution_charged),
+            (res.apply_resolution_charged_cartesian if cart_cov_hel else
+             res.apply_resolution_charged))
+
     weights, genpcls = generate(rng, decstr, nevts, smearer)
 
     data = {'weights': weights.tolist()}
