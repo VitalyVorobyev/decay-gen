@@ -8,7 +8,6 @@
 """
 
 from typing import NamedTuple, Callable
-import numpy as onp
 import jax.numpy as np
 import jax
 
@@ -56,17 +55,16 @@ def cluster_covariance(clu: Cluster) -> (dtype):
 
 def sample_resolution(rng: jax.random.PRNGKey, obj: NamedTuple,
                       covgen: Callable) -> (NamedTuple, dtype):
-    """ Resolution sampler
-        TODO: find out how to vectorize multivariate_normal
-    """
-    cov = covgen(obj)
-
+    """ Resolution sampler """
     objarr = obj.as_array
-    newobj = onp.empty(objarr.shape)
+    nevents, ndims = objarr.shape
 
-    for i, [h, c] in enumerate(zip(objarr, cov)):
-        newobj[i, :] = h + onp.random.multivariate_normal(
-            onp.zeros(c.shape[-1]), c)
+    cov = covgen(obj)
+    lv = np.linalg.cholesky(cov)
+    samp0 = jax.random.multivariate_normal(
+        rng, np.zeros(ndims), np.diag(np.ones(ndims)), (nevents,))
+
+    newobj = objarr + np.einsum('ijk, ik -> ij', lv, samp0)
 
     return (type(obj).from_ndarray(newobj), cov)
 
