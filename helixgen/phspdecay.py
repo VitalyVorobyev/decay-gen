@@ -82,7 +82,8 @@ def generate_phsp(decstr: str, nevt: int) -> (np.ndarray, dict):
     return (np.array(weights.numpy()), genpcls)
 
 
-def generate_positions(rng, genpcls, pos0, pcl=None):
+def generate_positions(rng: rjax.PRNGKey, genpcls: dict, pos0: np.ndarray,
+                       pcl: GenParticle=None):
     """ Generates position according to the momentum direction and lifetime
         Traverses decay tree recursively """
     if pcl is None:
@@ -99,8 +100,10 @@ def generate_positions(rng, genpcls, pos0, pcl=None):
             rng, key = rjax.split(rng)
             time = particle.lifetime * rjax.exponential(key, (nevt, 1))
             # TODO: add gamma factor multiplier here (relativistic correction)
-            pos0 = pos0 + mom.velocity(particle.mass) * time
-        generate_positions(rng, genpcls, pos0, ch)
+            chpos = pos0 + mom.velocity(particle.mass) * time
+        else:
+            chpos = pos0.copy()
+        generate_positions(rng, genpcls, chpos, ch)
 
 
 def generate(rng: rjax.PRNGKey, decstr: str, nevt: int, smearer: Callable):
